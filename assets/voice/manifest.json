@@ -1,0 +1,31 @@
+{
+  "model": "eleven_v4",
+  "note": "One take per line, generated with ElevenLabs Eleven v4 (ElevenCreative flow RgNXZb7ibevDbMNesqrf). Square-bracket tags are Eleven v4 audio tags. 'caption' is the on-screen subtitle.",
+  "voices": {
+    "byte": {"voice_id": "unWb9iRIK7Xxf4A5Hfis", "name": "VALF - Anime Protagonist Charismatic"},
+    "null": {"voice_id": "Cx1u6YPIa1SPiAbYj3gJ", "name": "Cavendish (reported as 'Rai' in generation metadata)"}
+  },
+  "lines": [
+    {"id": "01", "speaker": "byte", "file": "01_byte.mp3", "prompt": "[shouting] This is it, Null! Your reign of terror ends TODAY!", "caption": "THIS IS IT, NULL! YOUR REIGN OF TERROR ENDS TODAY!"},
+    {"id": "02", "speaker": "null", "file": "02_null.mp3", "prompt": "[sighs] You say that every day.", "caption": "YOU SAY THAT EVERY DAY."},
+    {"id": "03", "speaker": "byte", "file": "03_byte.mp3", "prompt": "[shouting] MEGA-BYTE... BUSTER!", "caption": "MEGA-BYTE... BUSTER!"},
+    {"id": "04", "speaker": "null", "file": "04_null.mp3", "prompt": "[flatly] That's just your regular gun. With a new name.", "caption": "THAT'S JUST YOUR REGULAR GUN. WITH A NEW NAME."},
+    {"id": "05", "speaker": "byte", "file": "05_byte.mp3", "prompt": "[roaring] HYAAAAAAH!", "caption": "HYAAAAAAH!"},
+    {"id": "06", "speaker": "null", "file": "06_null.mp3", "prompt": "[monotone] Hyah.", "caption": "HYAH."},
+    {"id": "07", "speaker": "byte", "file": "07_byte.mp3", "prompt": "[nervous] Uh... why is the sky made of static?", "caption": "UH... WHY IS THE SKY MADE OF STATIC?"},
+    {"id": "08", "speaker": "null", "file": "08_null.mp3", "prompt": "[calm] We hit on the same frame. It doesn't know who won.", "caption": "WE HIT ON THE SAME FRAME. IT DOESN'T KNOW WHO WON."},
+    {"id": "09", "speaker": "byte", "file": "09_byte.mp3", "prompt": "[gasps] Can it DO that?!", "caption": "CAN IT *DO* THAT?!"},
+    {"id": "10", "speaker": "null", "file": "10_null.mp3", "prompt": "[flatly] Evidently.", "caption": "EVIDENTLY."},
+    {"id": "11", "speaker": "byte", "file": "11_byte.mp3", "prompt": "[reluctantly] ...Truce. Just until we fix it.", "caption": "...TRUCE. JUST UNTIL WE FIX IT."},
+    {"id": "12", "speaker": "null", "file": "12_null.mp3", "prompt": "[deadpan] Wow. Character growth.", "caption": "WOW. CHARACTER GROWTH."},
+    {"id": "13", "speaker": "null", "file": "13_null.mp3", "prompt": "[reading slowly] Line four-twenty: TODO, figure out who wins.", "caption": "LINE 420: TODO, FIGURE OUT WHO WINS."},
+    {"id": "14", "speaker": "byte", "file": "14_byte.mp3", "prompt": "[incredulous] Four YEARS of fighting... over a TODO?!", "caption": "FOUR *YEARS* OF FIGHTING... OVER A TODO?!"},
+    {"id": "15", "speaker": "null", "file": "15_null.mp3", "prompt": "[flatly] Correct.", "caption": "CORRECT."},
+    {"id": "16", "speaker": "byte", "file": "16_byte.mp3", "prompt": "[thoughtful] ...What if nobody has to win?", "caption": "...WHAT IF NOBODY HAS TO WIN?"},
+    {"id": "17", "speaker": "null", "file": "17_null.mp3", "prompt": "[surprised] ...That's actually valid syntax.", "caption": "...THAT'S ACTUALLY VALID SYNTAX."},
+    {"id": "18", "speaker": "null", "file": "18_null.mp3", "prompt": "[muttering] Missing semicolon.", "caption": "MISSING SEMICOLON."},
+    {"id": "19", "speaker": "byte", "file": "19_byte.mp3", "prompt": "[laughing] It's ALWAYS the semicolon!", "caption": "IT'S *ALWAYS* THE SEMICOLON!"},
+    {"id": "20", "speaker": "byte", "file": "20_byte.mp3", "prompt": "[warmly] Hey, Null? I'm glad we crashed the game.", "caption": "HEY, NULL? I'M GLAD WE CRASHED THE GAME."},
+    {"id": "21", "speaker": "null", "file": "21_null.mp3", "prompt": "[softly] ...Same. [dryly] Don't tell the players.", "caption": "...SAME. DON'T TELL THE PLAYERS."}
+  ]
+}
