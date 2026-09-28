@@ -27,6 +27,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(ROOT, "out", "byte-vs-null.mp4"))
     ap.add_argument("--credit-model", default="CLAUDE",
                     help="name shown in the 'MADE WITH ...' credit on the title + end cards (default: CLAUDE)")
+    ap.add_argument("--crf", type=int, default=19, help="x264 quality (lower = bigger/better); 19 keeps the 67 s video under 30 MB")
     ap.add_argument("--audio-only", action="store_true")
     ap.add_argument("--max-seconds", type=float, default=None, help="render only the first N seconds (quick test)")
     args = ap.parse_args()
@@ -51,7 +52,7 @@ def main():
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{320 * SCALE}x{180 * SCALE}", "-r", str(FPS), "-i", "-",
            "-i", wav,
            "-map", "0:v", "-map", "1:a", "-t", f"{total:.3f}",
-           "-c:v", "libx264", "-preset", "slow", "-tune", "animation", "-crf", "15", "-pix_fmt", "yuv420p",
+           "-c:v", "libx264", "-preset", "slow", "-tune", "animation", "-crf", str(args.crf), "-pix_fmt", "yuv420p",
            "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
            "-movflags", "+faststart", args.out]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
