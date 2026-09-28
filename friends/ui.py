@@ -16,10 +16,9 @@ def text_c(f, cx, y, s, color, scale=1, shadow=(0, 0, 0), **kw):
     return draw_text(f, cx - w // 2, y, s, color, scale, shadow, **kw)
 
 
-def hp_bar(f, x, y, hp, color, flip=False, blink=False):
-    n = 25
-    fill_rect(f, x - 2, y - 2, 4 * n + 3, 9, INK)
-    rect_outline(f, x - 2, y - 2, 4 * n + 3, 9, (220, 225, 255))
+def hp_bar(f, x, y, hp, color, flip=False, blink=False, n=25, step=4):
+    fill_rect(f, x - 2, y - 2, step * n + 3, 9, INK)
+    rect_outline(f, x - 2, y - 2, step * n + 3, 9, (220, 225, 255))
     lit = int(round(hp * n))
     for i in range(n):
         j = (n - 1 - i) if flip else i
@@ -27,9 +26,9 @@ def hp_bar(f, x, y, hp, color, flip=False, blink=False):
         c = color if on else (30, 34, 66)
         if on and blink and (i % 2):
             c = (255, 255, 255)
-        fill_rect(f, x + j * 4, y, 3, 5, c)
+        fill_rect(f, x + j * step, y, step - 1, 5, c)
         if on:
-            fill_rect(f, x + j * 4, y, 3, 1, tuple(min(255, int(v * 1.35) + 20) for v in c))
+            fill_rect(f, x + j * step, y, step - 1, 1, tuple(min(255, int(v * 1.35) + 20) for v in c))
 
 
 def hud(f, byte_hp, null_hp, t, stage="STAGE 8"):
@@ -61,9 +60,10 @@ def wrap(s, width):
     return lines
 
 
-def caption(f, speaker, text, prog, speaking, t, expr="neutral"):
-    """Bottom dialogue box. prog 0..1 = typewriter progress."""
-    bx, by, bw, bh = 6, 146, W - 12, 30
+def caption(f, speaker, text, prog, speaking, t, expr="neutral", box=None, cols=41, max_lines=2):
+    """Bottom dialogue box. prog 0..1 = typewriter progress. `box`=(x,y,w,h) for other layouts (portrait)."""
+    custom = box is not None
+    bx, by, bw, bh = box if custom else (6, 146, W - 12, 30)
     blend_rect(f, bx, by, bw, bh, (8, 10, 30), 0.82)
     col = BYTE_C if speaker == "byte" else NULL_C
     rect_outline(f, bx, by, bw, bh, col)
@@ -72,17 +72,17 @@ def caption(f, speaker, text, prog, speaking, t, expr="neutral"):
     fill_rect(f, bx + 6, by - 5, text_width(name) + 8, 10, col)
     draw_text(f, bx + 10, by - 3, name, (10, 12, 30))
     # portrait
-    px, py = bx + 5, by + 3
+    px, py = bx + 5, (by + (bh - 25) // 2) if custom else by + 3
     fill_rect(f, px - 1, py - 1, 27, 27, INK)
     rect_outline(f, px - 1, py - 1, 27, 27, col)
     mouth = ("open" if speaker == "null" else "open") if (speaking and int(t * 9) % 2 == 0) else None
     pr = portrait(speaker, expr, mouth or ("flat" if speaker == "byte" else None))
     blit(f, pr, px, py)
-    lines = wrap(text, 41)
-    total = sum(len(l.replace("*", "")) for l in lines)
+    lines = wrap(text, cols)
+    total = sum(len(l.replace("*", "")) for l in lines[:max_lines])
     shown = int(prog * total + 0.999)
-    y = by + 6 + (5 if len(lines) == 1 else 0)
-    for l in lines[:2]:
+    y = (by + (bh - 11 * min(len(lines), max_lines)) // 2 + 1) if custom else by + 6 + (5 if len(lines) == 1 else 0)
+    for l in lines[:max_lines]:
         n = len(l.replace("*", ""))
         draw_text(f, bx + 36, y, l, PAPER, shadow=(0, 0, 20), limit=max(0, min(n, shown)))
         shown -= n

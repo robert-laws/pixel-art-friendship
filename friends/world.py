@@ -31,9 +31,10 @@ DAWN = Theme(
 def _tile_blit(f, tile, off, y):
     """Composite an RGBA tile scrolled horizontally by `off` px (wraps) with its top at row y."""
     h, wt = tile.shape[:2]
-    xs = (np.arange(W) + int(off)) % wt
+    Hf, Wf = f.shape[:2]
+    xs = (np.arange(Wf) + int(off)) % wt
     sub = tile[:, xs]
-    y0, y1 = max(0, y), min(H, y + h)
+    y0, y1 = max(0, y), min(Hf, y + h)
     if y1 <= y0:
         return
     sub = sub[y0 - y:y1 - y]
@@ -43,27 +44,30 @@ def _tile_blit(f, tile, off, y):
 
 
 class Arena:
-    def __init__(self, theme, seed=11):
+    def __init__(self, theme, seed=11, size=(W, H), gy=GY, far=(24, 58), mid=(40, 84), sun=(196, 92, 32),
+                 star_h=82, n_stars=46, girders=(320, (30, 190)), cloud_y=26, missing_y=(60, 40)):
+        """`size`/`gy` = frame size and ground line; `far`/`mid` = skyline building height ranges."""
         self.t = theme
+        self.w, self.h, self.gy = size[0], size[1], gy
+        self.mid_hmax, self.sun_cfg, self.cloud_y, self.missing_y = mid[1], sun, cloud_y, missing_y
         rng = np.random.default_rng(seed)
         self.rng = rng
         self.sky = self._sky()
-        self.far = self._skyline(640, 24, 58, theme.far, theme.far_hi, windows=False, rng=rng)
-        self.mid = self._skyline(640, 40, 84, theme.mid, theme.mid_hi, windows=True, rng=rng)
-        self.near = self._girders(320)
+        self.far = self._skyline(640, far[0], far[1], theme.far, theme.far_hi, windows=False, rng=rng)
+        self.mid = self._skyline(640, mid[0], mid[1], theme.mid, theme.mid_hi, windows=True, rng=rng)
+        self.near = self._girders(girders[0], girders[1])
         self.floor = self._floor(320)
         self.clouds = self._clouds(640, rng)
-        self.stars = [(int(rng.integers(0, W)), int(rng.integers(2, 82)), float(rng.random())) for _ in range(46)]
+        self.stars = [(int(rng.integers(0, self.w)), int(rng.integers(2, star_h)), float(rng.random())) for _ in range(n_stars)]
 
     # ------------------------------------------------------------ static pieces
     def _sky(self):
-        f = new_frame()
-        dither_gradient(f, 0, GY + 4, self.t.sky)
-        f[GY + 4:] = self.t.floor_lo
+        f = new_frame(size=(self.w, self.h))
+        dither_gradient(f, 0, self.gy + 4, self.t.sky)
+        f[self.gy + 4:] = self.t.floor_lo
         return f
 
     def _skyline(self, width, hmin, hmax, col, hi, windows, rng):
-        base = GY - 2
         tile = np.zeros((hmax + 14, width, 4), np.uint8)
         H_t = tile.shape[0]
         x = 0
@@ -94,11 +98,11 @@ class Arena:
             x += bw
         return tile
 
-    def _girders(self, width):
-        h = GY - 10
+    def _girders(self, width, cols):
+        h = self.gy - 10
         tile = np.zeros((h, width, 4), np.uint8)
         st, hi, lo = self.t.steel, self.t.steel_hi, self.t.steel_lo
-        for cx in (30, 190):
+        for cx in cols:
             tile[:, cx:cx + 12] = (*st, 255)
             tile[:, cx:cx + 2] = (*hi, 255)
             tile[:, cx + 10:cx + 12] = (*lo, 255)
@@ -116,7 +120,7 @@ class Arena:
         return tile
 
     def _floor(self, width):
-        h = H - GY
+        h = self.h - self.gy
         tile = np.zeros((h, width, 4), np.uint8)
         tile[..., 3] = 255
         tile[..., :3] = self.t.floor
@@ -159,13 +163,13 @@ class Arena:
         f[:] = self.sky
         if static > 0:                        # the sky turns into TV static
             r = np.random.default_rng(static_seed)
-            n = r.random((GY, W))
-            v = (r.random((GY, W)) * 200).astype(np.uint8)
+            n = r.random((self.gy, self.w))
+            v = (r.random((self.gy, self.w)) * 200).astype(np.uint8)
             m = n < static
-            f[:GY][m] = np.stack([v[m]] * 3, axis=1)
+            f[:self.gy][m] = np.stack([v[m]] * 3, axis=1)
         # sun
-        sx, sy, sr = 196, 92 - int(sun * 30), 32 + int(sun * 8)
-        ys, xs = np.mgrid[max(0, sy - sr):min(GY, sy + sr), max(0, sx - sr):sx + sr]
+        sx, sy, sr = self.sun_cfg[0], self.sun_cfg[1] - int(sun * 30), self.sun_cfg[2] + int(sun * 8)
+        ys, xs = np.mgrid[max(0, sy - sr):min(self.gy, sy + sr), max(0, sx - sr):sx + sr]
         m = (xs - sx) ** 2 + (ys - sy) ** 2 <= sr * sr
         tt = np.clip((ys - (sy - sr)) / (2 * sr), 0, 1)
         col = np.zeros(ys.shape + (3,), np.uint8)
@@ -182,30 +186,30 @@ class Arena:
                     f[y, x] = (255, 255, 255) if ph > 0.5 else (200, 190, 255)
         o = offs or [scroll * 0.05, scroll * 0.12, scroll * 0.3, scroll * 0.75, scroll * 1.0]
         v = vshift or [0, 0, 0, 0, 0]
-        _tile_blit(f, self.clouds, o[0] + t * 3, 26 + v[0])
+        _tile_blit(f, self.clouds, o[0] + t * 3, self.cloud_y + v[0])
         if 1 in missing:
-            _missing(f, 60, GY - 8, 16)
+            _missing(f, self.missing_y[0], self.gy - 8, 16)
         else:
-            _tile_blit(f, self.far, o[1], GY - 2 - self.far.shape[0] + 2 + v[1])
+            _tile_blit(f, self.far, o[1], self.gy - 2 - self.far.shape[0] + 2 + v[1])
         if 2 in missing:
-            _missing(f, 40, GY - 8, 8)
+            _missing(f, self.missing_y[1], self.gy - 8, 8)
         else:
-            _tile_blit(f, self.mid, o[2], GY - 2 - self.mid.shape[0] + 2 + v[2])
+            _tile_blit(f, self.mid, o[2], self.gy - 2 - self.mid.shape[0] + 2 + v[2])
         # antenna beacons on the mid layer
         for k in range(6):
-            bx = int((k * 107 - o[2]) % (W + 20)) - 10
+            bx = int((k * 107 - o[2]) % (self.w + 20)) - 10
             if math.sin(t * 5 + k * 1.7) > 0.4:
-                f[GY - 108 + (k * 13) % 30, min(W - 1, max(0, bx))] = (255, 60, 60)
+                f[self.gy - (self.mid_hmax + 24) + (k * 13) % 30, min(self.w - 1, max(0, bx))] = (255, 60, 60)
         _tile_blit(f, self.near, o[3], 6 + v[3])
         # lamp posts (behind the fighters, move with the floor)
         for k in range(3):
             px = int((k * 160 + 60 - o[4]) % 480) - 80
-            if -12 < px < W + 12:
-                fill_rect(f, px, GY - 44, 2, 44, th.pole)
-                fill_rect(f, px - 4, GY - 47, 10, 3, th.pole)
-                fill_rect(f, px - 3, GY - 44, 8, 1, th.lamp)
-                _glow(f, px + 1, GY - 42, 11, th.lamp)
-        _tile_blit(f, self.floor, o[4], GY + v[4])
+            if -12 < px < self.w + 12:
+                fill_rect(f, px, self.gy - 44, 2, 44, th.pole)
+                fill_rect(f, px - 4, self.gy - 47, 10, 3, th.pole)
+                fill_rect(f, px - 3, self.gy - 44, 8, 1, th.lamp)
+                _glow(f, px + 1, self.gy - 42, 11, th.lamp)
+        _tile_blit(f, self.floor, o[4], self.gy + v[4])
 
     def foreground(self, f, scroll, t):
         """Cables drooping across the top, drawn in front of the fighters (fast parallax)."""
@@ -214,7 +218,7 @@ class Arena:
             x0 = int((seg * 190 - o) % 760) - 200
             for i in range(0, 190):
                 x = x0 + i
-                if 0 <= x < W:
+                if 0 <= x < self.w:
                     y = 2 + int(14 * (1 - ((i - 95) / 95) ** 2)) * -1 + 16
                     f[y, x] = self.t.pole
                     if i % 6 == 0:
@@ -222,6 +226,7 @@ class Arena:
 
 
 def _glow(f, cx, cy, r, c):
+    H, W = f.shape[:2]
     y0, y1, x0, x1 = max(0, cy - r), min(H, cy + r), max(0, cx - r), min(W, cx + r)
     if x1 <= x0 or y1 <= y0:
         return
@@ -233,7 +238,7 @@ def _glow(f, cx, cy, r, c):
 
 def _missing(f, y0, y1, size):
     """Source-engine 'missing texture' look: magenta/black checker."""
-    ys, xs = np.mgrid[y0:y1, 0:W]
+    ys, xs = np.mgrid[y0:y1, 0:f.shape[1]]
     chk = ((xs // size) + (ys // size)) % 2 == 0
     f[y0:y1][chk] = (214, 32, 214)
     f[y0:y1][~chk] = (14, 12, 20)
@@ -263,11 +268,13 @@ def _butterfly(frame, col):
 
 
 class Void:
-    def __init__(self, seed=5):
+    def __init__(self, seed=5, size=(W, H), gy=GY):
+        self.w, self.h, self.gy = size[0], size[1], gy
         rng = np.random.default_rng(seed)
-        self.cols = [(int(x), float(rng.uniform(0.6, 1.6)), float(rng.random()) * 300) for x in range(6, W, 11)]
+        self.cols = [(int(x), float(rng.uniform(0.6, 1.6)), float(rng.random()) * 300) for x in range(6, self.w, 11)]
         self.bug = sprite_from_ascii(BUG, BUG_PAL)
-        self.bugs = [(float(rng.uniform(30, 290)), int(rng.integers(150, 172)), float(rng.uniform(-14, 14))) for _ in range(6)]
+        self.bugs = [(float(rng.uniform(30, self.w - 30)), int(rng.integers(gy + 10, gy + 32)), float(rng.uniform(-14, 14)))
+                     for _ in range(6)]
         self.bf = [_butterfly(0, (89, 230, 255)), _butterfly(1, (89, 230, 255)),
                    _butterfly(0, (255, 125, 176)), _butterfly(1, (255, 125, 176)),
                    _butterfly(0, (255, 210, 90)), _butterfly(1, (255, 210, 90))]
@@ -275,39 +282,39 @@ class Void:
     def render(self, f, t, fixed=0.0):
         f[:] = (10, 7, 22)
         # faint grid
-        for x in range(0, W, 16):
-            vline(f, x, 0, GY, (19, 15, 42))
-        for y in range(0, GY, 16):
-            hline(f, 0, y, W, (19, 15, 42))
+        for x in range(0, self.w, 16):
+            vline(f, x, 0, self.gy, (19, 15, 42))
+        for y in range(0, self.gy, 16):
+            hline(f, 0, y, self.w, (19, 15, 42))
         # code rain
         for (x, sp, off) in self.cols:
-            y = int((t * 38 * sp + off) % (GY + 60)) - 30
+            y = int((t * 38 * sp + off) % (self.gy + 60)) - 30
             for k in range(8):
                 yy = y - k * 4
-                if 0 <= yy < GY:
+                if 0 <= yy < self.gy:
                     g = max(0, 200 - k * 26)
                     green = (30, g, 90) if fixed < 0.5 else (g, 120 + g // 3, 90)
                     fill_rect(f, x, yy, 2, 3, (green[0] // 3, green[1] // 3, green[2] // 3) if k else (green[0] // 2, green[1] // 2, green[2] // 2))
         # missing-texture floor
-        ys, xs = np.mgrid[GY:H, 0:W]
-        chk = ((xs // 20) + ((ys - GY) // 10)) % 2 == 0
-        f[GY:H][chk] = (170, 28, 170) if fixed < 0.5 else (120, 90, 200)
-        f[GY:H][~chk] = (14, 12, 22)
-        hline(f, 0, GY, W, (255, 120, 255) if fixed < 0.5 else (200, 230, 255))
-        hline(f, 0, GY - 1, W, (80, 30, 100))
+        ys, xs = np.mgrid[self.gy:self.h, 0:self.w]
+        chk = ((xs // 20) + ((ys - self.gy) // 10)) % 2 == 0
+        f[self.gy:self.h][chk] = (170, 28, 170) if fixed < 0.5 else (120, 90, 200)
+        f[self.gy:self.h][~chk] = (14, 12, 22)
+        hline(f, 0, self.gy, self.w, (255, 120, 255) if fixed < 0.5 else (200, 230, 255))
+        hline(f, 0, self.gy - 1, self.w, (80, 30, 100))
 
     def draw_bugs(self, f, t, scatter=None, butter=None):
         """Crawling bugs; after the fix (`butter` = seconds since compile OK) they become butterflies."""
         for i, (x0, y0, v) in enumerate(self.bugs):
             if butter is None:
-                x = (x0 + v * t) % (W + 30) - 10
+                x = (x0 + v * t) % (self.w + 30) - 10
                 y = y0
                 spr = self.bug
                 if int(t * 6 + i) % 2:
                     spr = spr.copy(); spr[0, 2] = 0
                 blit(f, spr, x, y, flip=v < 0)
             else:
-                x = (x0 + v * (t - butter)) % (W + 30) - 10
+                x = (x0 + v * (t - butter)) % (self.w + 30) - 10
                 y = y0 - butter * (60 + i * 14) + math.sin(butter * 6 + i) * 7
                 frame = int(butter * 10 + i) % 2
                 blit(f, self.bf[(i % 3) * 2 + frame], x, y)

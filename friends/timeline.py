@@ -53,3 +53,54 @@ def build(D):
     C["credits"] = C["join"] + 1.35
     C["end"] = C["credits"] + 3.45
     return C
+
+
+# =====================================================================================
+#  Instagram-Story cut: <= 60 s per Story card. Four optional beats are dropped
+#  (07 "why is the sky made of static", 09/10 "Can it DO that?!/Evidently.", 12 "Character growth")
+#  and the intro, transitions and credits are tightened. Every setup and punchline stays.
+# =====================================================================================
+STORY_KEEP = ["01", "02", "03", "04", "05", "06", "08", "11", "13", "14", "15", "16", "17", "18", "19", "20", "21"]
+
+
+def build_story(D):
+    C = {"title_end": 2.90, "beam_in": 3.00, "fight_start": 3.85}
+    C["L01"] = C["fight_start"]
+    C["L02"] = C["L01"] + D["01"] + 0.15
+    C["L03"] = C["L02"] + D["02"] + 0.22
+    C["fire"] = C["L03"] + D["03"] - 0.30
+    C["L04"] = C["L03"] + D["03"] + 0.10
+    C["L05"] = C["L04"] + D["04"] + 0.25
+    C["L06"] = C["L05"] + 0.72
+    C["leap"] = C["L05"] + 1.10
+    C["clash"] = C["L05"] + 1.50
+    C["freeze"] = C["clash"] + 0.30
+    C["L08"] = C["clash"] + 1.30
+    C["void_off"] = C["L08"] + D["08"] + 0.40
+    C["void_on"] = C["void_off"] + 0.55 + 0.12
+    C["land_b"] = C["void_on"] + 0.55
+    C["land_n"] = C["void_on"] + 0.75
+    C["L11"] = C["void_on"] + 1.25
+    C["L13"] = C["L11"] + D["11"] + 0.16
+    C["L14"] = C["L13"] + D["13"] + 0.10
+    C["L15"] = C["L14"] + D["14"] + 0.06
+    C["L16"] = C["L15"] + D["15"] + 0.22
+    C["L17"] = C["L16"] + D["16"] + 0.14
+    C["type0"] = C["L17"] + D["17"] + 0.08
+    C["type_chars"] = "WINNER = NOBODY"
+    C["erase_dur"] = 0.25
+    C["cps"] = 20.0
+    C["type_end"] = C["type0"] + C["erase_dur"] + len(C["type_chars"]) / C["cps"]
+    C["err"] = C["type_end"] + 0.25
+    C["L18"] = C["err"] + 0.20
+    C["L19"] = C["L18"] + D["18"] + 0.06
+    C["semi"] = C["L19"] + D["19"] + 0.05
+    C["ok"] = C["semi"] + 0.25
+    C["reboot"] = C["ok"] + 0.90
+    C["L20"] = C["reboot"] + 0.70
+    C["L21"] = C["L20"] + D["20"] + 0.18
+    C["bump"] = C["L21"] + D["21"] + 0.25
+    C["join"] = C["bump"] + 0.15
+    C["credits"] = C["join"] + 1.15
+    C["end"] = C["credits"] + 2.90
+    return C

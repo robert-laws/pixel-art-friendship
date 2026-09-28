@@ -91,3 +91,20 @@ Fist bump. **PLAYER 2 HAS JOINED!** → credits card → *(It was a semicolon.)*
 * **Deadpan vs. earnest.** Byte escalates, Null de-escalates; the humor is the gap.
 * **Callbacks.** "Regular gun / new name" → "valid syntax"; "Hyah." → "Correct."; the minor-key battle
   theme → the same melody in a major key when they become friends.
+
+
+---
+
+## Instagram Story cut (9:16, 55.5 s)
+
+Same story, same takes, tighter. Cut for the 60-second Story limit:
+
+| Cut | Why it's safe |
+|---|---|
+| 07 *"Uh… why is the sky made of static?"* | The static sky is on screen; Null's explanation (08) follows directly |
+| 09 / 10 *"Can it DO that?!" / "Evidently."* | Fun, but the crash → "truce" beat still lands without it |
+| 12 *"Wow. Character growth."* | Nice tag, not load-bearing |
+
+Also tightened: title card (3.4 → 2.9 s), the crash/void transitions, typing speed, and the end credits.
+Unchanged: the battle (01–06), the crash explanation (08), the TODO reveal and outrage (13–15), the idea and the
+semicolon (16–19), and the friendship ending (20–21).

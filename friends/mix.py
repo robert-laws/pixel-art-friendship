@@ -39,9 +39,10 @@ def _fadeio(x, fi, fo):
 
 def build_music(C, total):
     m = np.zeros(int(total * SR) + SR, np.float32)
-    _put(m, ct.title_ready(TITLE_END - 0.30), 0.30)
-    battle_len = (C["clash"] + 0.95) - TITLE_END
-    _put(m, ct.tape_stop(ct.battle_theme(battle_len, fade=0.0), tail=1.0), TITLE_END)
+    title_end = C.get("title_end", TITLE_END)
+    _put(m, ct.title_ready(title_end - 0.30), 0.30)
+    battle_len = (C["clash"] + 0.95) - title_end
+    _put(m, ct.tape_stop(ct.battle_theme(battle_len, fade=0.0), tail=1.0), title_end)
     _put(m, ct.crash_sting(4.0), C["clash"] + 0.02)
     bed_start = C["clash"] + 3.4
     bed_len = (C["void_off"] + 0.55) - bed_start

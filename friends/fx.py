@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from .gfx import H, W, SCALE, blend_rect, fill_rect, hexc, hline, vline
+from .gfx import SCALE, blend_rect, fill_rect, hexc, hline, vline
 
 WHITE = (255, 255, 255)
 
@@ -20,6 +20,7 @@ def flash(f, a, color=WHITE):
 
 
 def circle(f, cx, cy, r, c, fill=False):
+    H, W = f.shape[:2]
     y0, y1, x0, x1 = max(0, int(cy - r - 1)), min(H, int(cy + r + 2)), max(0, int(cx - r - 1)), min(W, int(cx + r + 2))
     if y1 <= y0 or x1 <= x0:
         return
@@ -30,6 +31,7 @@ def circle(f, cx, cy, r, c, fill=False):
 
 
 def starburst(f, cx, cy, r, c, c2=WHITE, spikes=8, rot=0.0):
+    H, W = f.shape[:2]
     for i in range(spikes):
         a = rot + i * math.tau / spikes
         L = r if i % 2 == 0 else r * 0.55
@@ -90,6 +92,7 @@ def aura(f, cx, cy, t, color, power=1.0, r=16):
 
 
 def speedlines(f, t, color=(255, 255, 255), n=14, alpha=0.5):
+    H, W = f.shape[:2]
     rng = np.random.default_rng(int(t * 30))
     for _ in range(n):
         y = int(rng.integers(6, 136))
@@ -100,6 +103,7 @@ def speedlines(f, t, color=(255, 255, 255), n=14, alpha=0.5):
 
 def crt_on(f, p):
     """p 0..1: white line expands to fill the screen."""
+    H, W = f.shape[:2]
     if p >= 1:
         return
     out = np.zeros_like(f)
@@ -113,6 +117,7 @@ def crt_on(f, p):
 
 def crt_off(f, p):
     """p 0..1: picture collapses to a horizontal line, then a dot."""
+    H, W = f.shape[:2]
     if p <= 0:
         return
     if p >= 1:
@@ -136,6 +141,7 @@ def crt_off(f, p):
 # ---------------------------------------------------------------- glitch
 def glitch(f, k, seed, keep_rows=None):
     """Corrupt a frame. k in 0..1 = intensity. Deterministic for a given seed."""
+    H, W = f.shape[:2]
     rng = np.random.default_rng(seed)
     src = f.copy()
     # horizontal slice displacement
@@ -170,6 +176,7 @@ def glitch(f, k, seed, keep_rows=None):
 
 
 def static(f, amount, seed):
+    H, W = f.shape[:2]
     rng = np.random.default_rng(seed)
     n = rng.random((H, W))
     v = (rng.random((H, W)) * 255).astype(np.uint8)
@@ -186,15 +193,17 @@ def smear(f, prev, k):
 
 # ---------------------------------------------------------------- final look (applied at 1280x720)
 _crt_mask = None
+_crt_key = None
 
 
-def crt_look(up):
+def crt_look(up, scale=SCALE):
     """Scanlines + soft vignette on the upscaled frame."""
-    global _crt_mask
-    if _crt_mask is None or _crt_mask.shape[:2] != up.shape[:2]:
+    global _crt_mask, _crt_key
+    if _crt_mask is None or _crt_key != (up.shape[:2], scale):
+        _crt_key = (up.shape[:2], scale)
         h, w = up.shape[:2]
         ys, xs = np.mgrid[0:h, 0:w]
-        scan = np.where((ys % SCALE) == SCALE - 1, 0.86, 1.0)
+        scan = np.where((ys % scale) == scale - 1, 0.86, 1.0)
         vx = (xs - w / 2) / (w / 2)
         vy = (ys - h / 2) / (h / 2)
         vig = 1.0 - 0.28 * np.clip(vx ** 2 * 0.6 + vy ** 2 * 0.8, 0, 1.3)

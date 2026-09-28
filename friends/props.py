@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from .gfx import BAYER4, H, W, blend_rect, fill_rect, hline, vline
+from .gfx import BAYER4, blend_rect, fill_rect, hline, vline
 
 WOOD, WOOD_HI, WOOD_LO = (156, 100, 62), (204, 146, 92), (108, 68, 44)
 DESK_DK, DESK_MD, DESK_HI = (44, 34, 72), (68, 54, 110), (96, 80, 146)
@@ -14,10 +14,11 @@ BEZEL, BEZEL_HI, BEZEL_LO = (208, 200, 182), (240, 234, 220), (150, 142, 126)
 
 def chair(f, x, gy=140):
     """Office chair, seat centre x. Seat top is 4px above the floor line so a seated fighter (y=4) rests on it."""
-    fill_rect(f, x - 11, 114, 5, 23, SEAT)                     # backrest (behind the sitter's back)
-    fill_rect(f, x - 11, 114, 1, 23, SEAT_HI)
-    fill_rect(f, x - 7, 114, 1, 23, SEAT_LO)
-    fill_rect(f, x - 10, 113, 3, 1, SEAT)
+    top = gy - 26
+    fill_rect(f, x - 11, top, 5, 23, SEAT)                     # backrest (behind the sitter's back)
+    fill_rect(f, x - 11, top, 1, 23, SEAT_HI)
+    fill_rect(f, x - 7, top, 1, 23, SEAT_LO)
+    fill_rect(f, x - 10, top - 1, 3, 1, SEAT)
     fill_rect(f, x - 10, gy - 4, 21, 3, SEAT)                  # seat
     hline(f, x - 10, gy - 4, 21, SEAT_HI)
     hline(f, x - 10, gy - 2, 21, SEAT_LO)
@@ -108,6 +109,7 @@ def mug(f, x, y, t):
 
 def hologram(f, mx0, mx1, my, wx0, wx1, wy, t):
     """Light cone from the monitor up to the floating code window."""
+    W = f.shape[1]
     span = max(1, my - wy)
     for y in range(wy, my):
         u = (y - wy) / span
@@ -124,6 +126,7 @@ def hologram(f, mx0, mx1, my, wx0, wx1, wy, t):
 
 def reveal(f, layer, p):
     """Materialise the pixels that `layer` added on top of `f` using ordered dithering (p: 0..1)."""
+    H, W = f.shape[:2]
     changed = np.any(layer != f, axis=2)
     if p >= 1.0:
         f[changed] = layer[changed]

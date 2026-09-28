@@ -17,8 +17,9 @@ def lerp(a, b, t):
     return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
 
 
-def new_frame(color=(0, 0, 0)):
-    f = np.empty((H, W, 3), np.uint8)
+def new_frame(color=(0, 0, 0), size=None):
+    w, h = size if size else (W, H)
+    f = np.empty((h, w, 3), np.uint8)
     f[:] = color
     return f
 
@@ -109,8 +110,8 @@ def silhouette(spr, c):
     return s
 
 
-def upscale(f):
-    return np.repeat(np.repeat(f, SCALE, axis=0), SCALE, axis=1)
+def upscale(f, scale=SCALE):
+    return np.repeat(np.repeat(f, scale, axis=0), scale, axis=1)
 
 
 class Art:
