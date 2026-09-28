@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from . import fx, ui
+from . import fx, props, ui
 from .characters import CW, OX, OY, muzzle, sprite
 from .font import ADV, draw_text, text_width
 from .gfx import H, W, blend_rect, blit, fill_rect, hexc, hline, new_frame, silhouette
@@ -383,10 +383,10 @@ class Film:
 
     # ------------------------------------------------------------------ the debug void
     def _terminal_state(self, t):
+        """Rows of the code window: 0 run, 1 hang, 2 line 420, 3 line 421 (the fix), 4 line 422, 5 build, 6 result."""
         C = self.C
         rows = [("> RUN STAGE_8.GAME", (190, 255, 200)),
                 ("!! HANG AT LINE 420 !!", (255, 110, 120)),
-                ("", (0, 0, 0)),
                 ("420 IF (P1.HP == 0 && P2.HP == 0) {", (190, 255, 200)),
                 ["421   ", (150, 170, 215)],
                 ("422 }", (190, 255, 200)),
@@ -394,101 +394,134 @@ class Film:
                 ("", (0, 0, 0))]
         todo = "// TODO: FIGURE OUT WHO WINS"
         typed = C["type_chars"]
-        cursor_row, hl, flash = 4, None, None
+        hl, flash = None, None
         if t < C["type0"]:
-            rows[4][0] = "421   " + todo
+            rows[3][0] = "421   " + todo
             if C["L13"] <= t < C["L15"]:
-                hl = 4
+                hl = 3
         elif t < C["type0"] + C["erase_dur"]:
             u = seg(t, C["type0"], C["type0"] + C["erase_dur"])
-            rows[4][0] = "421   " + todo[: int(len(todo) * (1 - u))]
-            hl = 4
+            rows[3][0] = "421   " + todo[: int(len(todo) * (1 - u))]
+            hl = 3
         else:
-            n = int((t - C["type0"] - C["erase_dur"]) * C["cps"])
-            n = min(len(typed), n)
+            n = min(len(typed), int((t - C["type0"] - C["erase_dur"]) * C["cps"]))
             semi = ";" if t >= C["semi"] else ""
-            rows[4][0] = "421   " + typed[:n] + (semi if n == len(typed) else "")
-            hl = 4 if t < C["ok"] + 0.2 else None
-        rows[4] = (rows[4][0], (255, 255, 255) if t >= C["type0"] else (150, 170, 215))
-        if t >= C["type_end"] + 0.08 and t < C["semi"]:
-            rows[6] = ("> BUILD...", (190, 255, 200))
+            rows[3][0] = "421   " + typed[:n] + (semi if n == len(typed) else "")
+            hl = 3 if t < C["ok"] + 0.2 else None
+        rows[3] = (rows[3][0], (255, 255, 255) if t >= C["type0"] else (150, 170, 215))
+        if C["type_end"] + 0.08 <= t:
+            rows[5] = ("> BUILD...", (190, 255, 200))
         if C["err"] <= t < C["semi"]:
-            rows[7] = ("ERROR: EXPECTED ';' AT LINE 421", (255, 100, 110))
-            flash = 7 if t < C["err"] + 0.7 else None
-        if t >= C["semi"]:
-            rows[6] = ("> BUILD...", (190, 255, 200))
+            rows[6] = ("ERROR: EXPECTED ';' AT LINE 421", (255, 100, 110))
+            flash = 6 if t < C["err"] + 0.7 else None
         if t >= C["ok"]:
-            rows[7] = ("BUILD OK!  0 ERRORS  0 BUGS", (120, 255, 150))
+            rows[6] = ("BUILD OK!  0 ERRORS  0 BUGS", (120, 255, 150))
             rows[1] = ("OK: NO MORE HANGS", (120, 255, 150))
-        text_len = len(rows[cursor_row][0])
-        cursor = (cursor_row, text_len) if (C["L13"] <= t < C["ok"] + 0.4) else None
+        cursor = (3, len(rows[3][0])) if (C["L13"] <= t < C["ok"] + 0.4) else None
         return rows, cursor, hl, flash
 
     def _debug(self, t):
+        """Null sits at a desk typing on the terminal; Byte stands behind the chair, watching over his shoulder."""
         C, D = self.C, self.D
         f = new_frame()
         fixed = seg(t, C["ok"], C["ok"] + 0.8)
         self.void.render(f, t, fixed)
         rows, cursor, hl, flash = self._terminal_state(t)
+
+        NXS, BXS, STOOL = 110, 88, 5                                  # chair spot / Byte's spot / step-stool height
+        DESK_X0, DESK_X1, DESK_TOP = 116, 262, 129
+        MON_X, MON_Y = 168, 100
+        land_n = C["land_n"]
+        seat = 4                                                      # seated fighters rest 4px above the floor line
+
+        # the desk, chair and monitor materialise around them as they land
+        stool_p = seg(t, C["land_b"] - 0.12, C["land_b"] + 0.20)
+        chair_p = seg(t, land_n - 0.15, land_n + 0.25)
+        desk_p = seg(t, land_n + 0.10, land_n + 0.60)
+        win_on = t >= land_n + 0.55
+        state = "ok" if t >= C["ok"] else ("error" if C["err"] <= t < C["semi"] else "normal")
         jolt = int(2 * math.sin(t * 70)) if self.speaking("14", t) else 0
-        ui.terminal(f, 50 + jolt, 8, 220, 98, "DEBUG.EXE - STAGE_8.GAME", rows, t, cursor, hl, flash_row=flash)
+
+        if win_on:
+            props.hologram(f, MON_X, MON_X + 46, MON_Y, 44 + jolt, 276 + jolt, 80, t)
+            ui.terminal(f, 44 + jolt, 2, 232, 78, "DEBUG.EXE - STAGE_8.GAME", rows, t, cursor, hl, flash_row=flash,
+                        pitch=9, top=14)
         butter = (t - C["ok"]) if t >= C["ok"] else None
         self.void.draw_bugs(f, t, butter=butter)
 
-        BXS, NXS = 96, 224
-        B = dict(x=BXS, stance="sit", arm="down", expr="neutral", flip=False)
-        N = dict(x=NXS, stance="sit", arm="cross", expr="deadpan", flip=True, wind=0.15)
-        # falling in
-        for (S, land) in ((B, C["land_b"]), (N, C["land_n"])):
-            if t < land:
+        if stool_p > 0:
+            g = f.copy()
+            props.stool(g, BXS, GY, STOOL)
+            props.reveal(f, g, stool_p)
+        if chair_p > 0:
+            g = f.copy()
+            props.chair(g, NXS, GY)
+            props.reveal(f, g, chair_p)
+
+        B = dict(x=BXS, y=STOOL, stance="stand", arm="down", expr="neutral", flip=False)
+        N = dict(x=NXS, y=seat, stance="sit", arm="reach", expr="deadpan", flip=False, wind=0.15)
+        for (S, land, base) in ((B, C["land_b"], STOOL), (N, land_n, seat)):
+            if t < land:                                              # falling in
                 u = seg(t, C["void_on"] - 0.05, land)
-                S.update(y=172 * (1 - u * u), stance="fall", arm="raise", back="hit", expr="wide", mouth="shout")
-            elif t < land + 0.22:
-                S["y"] = 4 * (1 - (t - land) / 0.22) * abs(math.sin((t - land) * 22))
-        for (land, x) in ((C["land_b"], BXS), (C["land_n"], NXS)):
+                S.update(y=base + 172 * (1 - u * u), stance="fall", arm="raise", back="hit", expr="wide", mouth="shout")
+            elif t < land + 0.22:                                     # bounce
+                S["y"] = base + 4 * (1 - (t - land) / 0.22) * abs(math.sin((t - land) * 22))
+        for (land, x) in ((C["land_b"], BXS), (land_n, NXS)):
             fx.burst(f, x, GY - 2, t - land, 12, 40, [(190, 170, 210), (120, 100, 150)], 0.5, 2, 30, 9)
-        # story beats
-        if t >= C["land_n"] + 0.25:
-            B["expr"], N["expr"] = "blink" if int(t * 2) % 5 == 0 else "worried", "deadpan"
+
+        typing = C["type0"] <= t < C["type_end"] or C["semi"] <= t < C["semi"] + 0.25
+        if t >= land_n + 0.25:
+            B.update(arm="down", expr="worried" if int(t * 2) % 5 else "blink")
             if self.speaking("11", t):
                 B["expr"] = "neutral"
             if self.speaking("12", t):
                 N["expr"] = "smug"
                 B.update(expr="angry", lean=1)
-                ui.sweat(f, BXS + 9, GY - 38, t)
-            if C["L13"] - 0.2 <= t < C["L14"]:
-                N.update(arm="reach", expr="deadpan", lean=1)
-                B.update(arm="chin", expr="neutral", lean=1)
+                ui.sweat(f, BXS + 9, GY - STOOL - 38, t)
+            if C["L13"] - 0.2 <= t < C["L14"]:                        # leans in to read over Null's shoulder
+                B.update(arm="chin", expr="neutral", lean=3)
+                N["lean"] = 1
             if self.speaking("14", t):
-                B.update(stance="stand", arm="raise", back="raise", expr="angry", y=0, lean=0)
-                ui.bang(f, BXS + 4, GY - 46, t)
+                B.update(arm="raise", back="raise", expr="angry", lean=0, y=STOOL + (1 if int(t * 12) % 2 else 0))
+                N.update(expr="wide", y=seat + 1)
+                ui.bang(f, BXS + 4, GY - STOOL - 46, t)
             elif C["L15"] - 0.02 <= t < C["L16"]:
-                B.update(expr="worried", arm="chin")
-                N.update(y=1 if int(t * 6) % 2 else 0)
+                B.update(arm="chin", expr="worried", lean=3)
+                N["y"] = seat + (1 if int(t * 6) % 2 else 0)          # nods
             if C["L16"] <= t < C["type0"]:
-                B.update(arm="point", expr="wide" if t < C["L16"] + 0.7 else "happy")
-                ui.bulb(f, BXS + 2, GY - 42, t)
+                B.update(arm="point", lean=3, expr="wide" if t < C["L16"] + 0.7 else "happy")
+                ui.bulb(f, BXS + 2, GY - STOOL - 44, t)
             if C["L17"] <= t < C["type0"]:
                 N.update(expr="wide" if t < C["L17"] + 0.7 else "happy", arm="cross")
-            if C["type0"] <= t < C["ok"]:
+            if C["type0"] <= t < C["ok"] + 0.3:
                 N.update(arm="reach", expr="deadpan", lean=1)
-                B.update(arm="chin", expr="happy" if t < C["err"] else "wide", lean=1)
+                B.update(arm="chin", expr="happy" if t < C["err"] else "wide", lean=3)
+            if typing:
+                N["y"] = seat + (1 if int(t * C["cps"]) % 2 else 0)   # keystroke bounce
             if C["err"] <= t < C["L19"]:
-                N.update(arm="reach", expr="deadpan")
-                B.update(arm="chin", expr="wide")
+                B.update(arm="chin", expr="wide", lean=3)
             if self.speaking("19", t):
-                B.update(expr="happy", arm="down", y=1 if int(t * 9) % 2 else 0, lean=0)
+                B.update(expr="happy", arm="down", y=STOOL + (1 if int(t * 9) % 2 else 0), lean=2)
                 N.update(expr="happy", arm="cross")
             if C["semi"] <= t < C["ok"] + 0.3:
-                N.update(arm="reach", expr="happy")
-                B.update(arm="chin", expr="happy")
+                B.update(arm="chin", expr="happy", lean=3)
             if t >= C["ok"] + 0.3:
-                B.update(arm="raise", back="raise", expr="happy", y=1 if int(t * 7) % 2 else 0, lean=0)
-                N.update(arm="down", expr="happy", lean=0)
-        self.draw_actor(f, "null", N, t)
+                B.update(arm="raise", back="raise", expr="happy", y=STOOL + (1 if int(t * 7) % 2 else 0), lean=0)
+                N.update(arm="raise", back=None, expr="happy", lean=0)
+
+        self.draw_actor(f, "null", N, t)                              # Null first, Byte in front of the chair back
         self.draw_actor(f, "byte", B, t)
+
+        if desk_p > 0:
+            g = f.copy()
+            props.desk(g, DESK_X0, DESK_X1, DESK_TOP)
+            props.keyboard(g, 122, DESK_TOP - 3)
+            props.monitor(g, MON_X, MON_Y, rows, t, state, hl, cursor)
+            props.mug(g, 236, DESK_TOP - 6, t)
+            props.reveal(f, g, desk_p)
+
         if t >= C["ok"] and t < C["ok"] + 0.5:
-            fx.burst(f, 160, 60, t - C["ok"], 40, 110, [(120, 255, 150), (255, 255, 255), (255, 216, 74)], 0.8, 2, -20, 4)
+            fx.burst(f, 190, 100, t - C["ok"], 40, 110, [(120, 255, 150), (255, 255, 255), (255, 216, 74)], 0.8, 2, -20, 4)
         if t >= C["ok"]:
             fx.flash(f, 0.5 * (1 - seg(t, C["ok"], C["ok"] + 0.25)), (200, 255, 210))
         if t >= C["reboot"] - 0.3:
@@ -573,7 +606,8 @@ class Film:
                (C["clash"], "clash", 1.0), (C["clash"], "hit", 0.9), (C["clash"] + 0.02, "crash", 1.0)]
         for dt in (1.0, 1.75, 2.4, 3.1, 3.7):
             ev.append((C["clash"] + dt, "glitch", 0.55))
-        ev += [(C["land_b"], "land", 0.9), (C["land_n"], "land", 0.9)]
+        ev += [(C["land_b"], "land", 0.9), (C["land_n"], "land", 0.9),
+               (C["land_n"] + 0.12, "bleep", 0.55), (C["land_n"] + 0.34, "bleep", 0.5), (C["land_n"] + 0.56, "confirm", 0.35)]
         ev += [(C["void_off"], "dash", 0.6)]
         # typing
         n = len(C["type_chars"])

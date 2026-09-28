@@ -91,7 +91,8 @@ def caption(f, speaker, text, prog, speaking, t, expr="neutral"):
         draw_text(f, bx + bw - 12, by + bh - 10, "▶", col)
 
 
-def terminal(f, x, y, w, h, title, lines, t, cursor=None, hl_row=None, hl_color=(90, 70, 20), flash_row=None):
+def terminal(f, x, y, w, h, title, lines, t, cursor=None, hl_row=None, hl_color=(90, 70, 20), flash_row=None,
+             pitch=10, top=16):
     """Retro terminal window. lines = [(text, color)], cursor = (row, col) or None."""
     blend_rect(f, x + 3, y + 3, w, h, (0, 0, 0), 0.5)
     fill_rect(f, x, y, w, h, (10, 14, 34))
@@ -100,17 +101,17 @@ def terminal(f, x, y, w, h, title, lines, t, cursor=None, hl_row=None, hl_color=
     draw_text(f, x + 5, y + 2, title, (255, 255, 255))
     for i, cc in enumerate(((255, 96, 96), (255, 210, 90), (96, 230, 130))):
         fill_rect(f, x + w - 30 + i * 9, y + 3, 5, 5, cc)
-    ly = y + 16
+    ly = y + top
     for row, item in enumerate(lines):
         text, col = item if isinstance(item, tuple) else (item, (190, 255, 200))
         if hl_row == row:
-            fill_rect(f, x + 2, ly - 2, w - 4, 10, hl_color)
+            fill_rect(f, x + 2, ly - 1, w - 4, pitch - 1, hl_color)
         if flash_row == row and int(t * 10) % 2 == 0:
-            fill_rect(f, x + 2, ly - 2, w - 4, 10, (150, 30, 50))
+            fill_rect(f, x + 2, ly - 1, w - 4, pitch - 1, (150, 30, 50))
         draw_text(f, x + 6, ly, text, col)
         if cursor and cursor[0] == row and int(t * 2.5) % 2 == 0:
             fill_rect(f, x + 6 + cursor[1] * ADV, ly - 1, 5, 9, (255, 255, 255))
-        ly += 10
+        ly += pitch
     # subtle scanlines inside the window
     for yy in range(y + 12, y + h - 1, 2):
         blend_rect(f, x + 1, yy, w - 2, 1, (0, 0, 0), 0.18)

@@ -47,7 +47,12 @@ decide between *BYTE WINS!* and *NULL WINS!*.
 The picture collapses like a CRT switching off.
 
 ## Act III — the debug void
-Missing-texture floor, code rain, a floating terminal (`DEBUG.EXE`). They fall in, land, and sit down.
+Missing-texture floor and code rain. They fall in — and a desk, an office chair and a CRT materialise around them.
+**Null sits at the desk and types; Byte stands on a little step stool behind the chair, leaning in to watch over
+his shoulder.** The monitor projects a hologram of the code (`DEBUG.EXE`) so the audience can read it: a
+`// TODO` sticky note on the bezel, a steaming mug, and a monitor border that flashes red on the compile error and
+green on success. Byte reacts to every beat: leaning in to read, jumping up at the TODO, the idea lightbulb, doubling
+over laughing.
 
 | # | Who | Line |
 |---|---|---|

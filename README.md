@@ -1,8 +1,8 @@
 # BYTE vs NULL — a pixel-art short made entirely with code
 
 Two Mega-Man-style robots fight the final boss battle of their game. They hit each other on the same frame,
-the game has no case for a tie, and it crashes. Stuck in the debug void, the rivals have to sit down, read the
-code, and fix it — together. About one minute; 1280×720, 30 fps, stereo.
+the game has no case for a tie, and it crashes. Stuck in the debug void, the rivals have to sit down at a terminal, read the
+code, and fix it — together (one types, the other watches over their shoulder). About one minute; 1280×720, 30 fps, stereo.
 
 ▶ **`out/byte-vs-null.mp4`** is the finished video. Story and dialogue: [`SCRIPT.md`](SCRIPT.md).
 
@@ -69,6 +69,7 @@ friends/
   scenes.py         choreography for every scene (Film.frame(t), Film.events())
   characters.py     BYTE / NULL sprite generator (poses, expressions, lip-flap)
   world.py          parallax arena (dusk + dawn) and the debug void
+  props.py          desk, chair, step stool, CRT monitor + code hologram
   fx.py ui.py font.py gfx.py   glitch/CRT effects, HUD + captions + terminal, 5x7 font, pixel helpers
   chiptune.py mix.py           music/SFX synth and the final mix
   voice.py          load / trim / level the Eleven v4 takes
